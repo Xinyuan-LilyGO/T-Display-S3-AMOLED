@@ -6,7 +6,7 @@ T-Display-S3-AMOLED is an ESP32-S3 development board. Equipped with a new AMOLED
 
 ## Pinout
 
-![](image/.jpg)
+![](image/T-Display-S3-AMOLED.jpg)
 
 ## Where to buy
 
