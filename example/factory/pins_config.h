@@ -11,8 +11,10 @@
 #define EXAMPLE_LCD_V_RES     240
 #define LVGL_LCD_BUF_SIZE     (EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES)
 
-#define WIFI_SSID             "YOUR-SSID"
-#define WIFI_PASSWORD         "YOUR-PSW"
+// #define WIFI_SSID             "YOUR-SSID"
+// #define WIFI_PASSWORD         "YOUR-PSW"
+#define WIFI_SSID             "xinyuandianzi"
+#define WIFI_PASSWORD         "AA15994823428"
 
 #define WIFI_CONNECT_WAIT_MAX (30 * 1000)
 

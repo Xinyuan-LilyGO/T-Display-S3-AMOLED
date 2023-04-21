@@ -8,13 +8,13 @@ const static lcd_cmd_t rm67162_spi_init[] = {
     // {0x35, {0x00},        0x00}, //TE ON
     // {0x34, {0x00},        0x00}, //TE OFF
     {0x36, {0x00}, 0x01}, // Scan Direction Control
-    {0x3A, {0x75}, 0x01}, // Interface Pixel Format	16bit/pixel
-    // {0x3A, {0x76},        0x01}, //Interface Pixel Format	18bit/pixel
-    // {0x3A, {0x77},        0x01}, //Interface Pixel Format	24bit/pixel
+    {0x3A, {0x75}, 0x01}, // Interface Pixel Format 16bit/pixel
+    // {0x3A, {0x76},        0x01}, //Interface Pixel Format    18bit/pixel
+    // {0x3A, {0x77},        0x01}, //Interface Pixel Format    24bit/pixel
     {0x51, {0x00}, 0x01},        // Write Display Brightness MAX_VAL=0XFF
     {0x11, {0x00}, 0x01 | 0x80}, // Sleep Out
     {0x29, {0x00}, 0x01 | 0x80}, // Display on
-    {0x51, {0xD0}, 0x01},        // Write Display Brightness	MAX_VAL=0XFF
+    {0x51, {0xD0}, 0x01},        // Write Display Brightness    MAX_VAL=0XFF
 };
 
 const static lcd_cmd_t rm67162_qspi_init[] = {
@@ -23,12 +23,12 @@ const static lcd_cmd_t rm67162_qspi_init[] = {
     // {0x35, {0x00},        0x00}, //TE ON
     // {0x34, {0x00},        0x00}, //TE OFF
     // {0x36, {0x00},        0x01}, //Scan Direction Control
-    {0x3A, {0x55}, 0x01}, // Interface Pixel Format	16bit/pixel
-    // {0x3A, {0x66},        0x01}, //Interface Pixel Format	18bit/pixel
-    // {0x3A, {0x77},        0x01}, //Interface Pixel Format	24bit/pixel
+    {0x3A, {0x55}, 0x01}, // Interface Pixel Format 16bit/pixel
+    // {0x3A, {0x66},        0x01}, //Interface Pixel Format    18bit/pixel
+    // {0x3A, {0x77},        0x01}, //Interface Pixel Format    24bit/pixel
     {0x51, {0x00}, 0x01}, // Write Display Brightness MAX_VAL=0XFF
     {0x29, {0x00}, 0x80}, // Display on
-    {0x51, {0xD0}, 0x01}, // Write Display Brightness	MAX_VAL=0XFF
+    {0x51, {0xD0}, 0x01}, // Write Display Brightness   MAX_VAL=0XFF
 };
 
 static spi_device_handle_t spi;
@@ -74,13 +74,10 @@ static void lcd_send_cmd(uint32_t cmd, uint8_t *dat, uint32_t len)
     t.cmd = 0x02;
     t.addr = cmd << 8;
     // Serial.printf("t.addr:0x%X\r\n", t.addr);
-    if (len != 0)
-    {
+    if (len != 0) {
         t.tx_buffer = dat;
         t.length = 8 * len;
-    }
-    else
-    {
+    } else {
         t.tx_buffer = NULL;
         t.length = 0;
     }
@@ -88,8 +85,7 @@ static void lcd_send_cmd(uint32_t cmd, uint8_t *dat, uint32_t len)
     TFT_CS_H;
 #else
     WriteComm(cmd);
-    if (len != 0)
-    {
+    if (len != 0) {
         for (int i = 0; i < len; i++)
             WriteData(dat[i]);
     }
@@ -140,30 +136,33 @@ void rm67162_init(void)
     SPI.setFrequency(SPI_FREQUENCY);
     pinMode(TFT_DC, OUTPUT);
 #endif
-
+    // Initialize the screen multiple times to prevent initialization failure
+    int i = 3;
+    while (i--) {
 #if LCD_USB_QSPI_DREVER == 1
-    const lcd_cmd_t *lcd_init = rm67162_qspi_init;
-    for (int i = 0; i < sizeof(rm67162_qspi_init) / sizeof(lcd_cmd_t); i++)
+        const lcd_cmd_t *lcd_init = rm67162_qspi_init;
+        for (int i = 0; i < sizeof(rm67162_qspi_init) / sizeof(lcd_cmd_t); i++)
 #else
-    const lcd_cmd_t *lcd_init = rm67162_spi_init;
-    for (int i = 0; i < sizeof(rm67162_spi_init) / sizeof(lcd_cmd_t); i++)
+        const lcd_cmd_t *lcd_init = rm67162_spi_init;
+        for (int i = 0; i < sizeof(rm67162_spi_init) / sizeof(lcd_cmd_t); i++)
 #endif
-    {
-        lcd_send_cmd(lcd_init[i].cmd,
-                     (uint8_t *)lcd_init[i].data,
-                     lcd_init[i].len & 0x7f);
+        {
+            lcd_send_cmd(lcd_init[i].cmd,
+                         (uint8_t *)lcd_init[i].data,
+                         lcd_init[i].len & 0x7f);
 
-        if (lcd_init[i].len & 0x80)
-            delay(120);
+            if (lcd_init[i].len & 0x80)
+                delay(120);
+        }
     }
+
 }
 
 void lcd_setRotation(uint8_t r)
 {
     uint8_t gbr = TFT_MAD_RGB;
 
-    switch (r)
-    {
+    switch (r) {
     case 0: // Portrait
         // WriteData(gbr);
         break;
@@ -188,8 +187,7 @@ void lcd_address_set(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
         {0x2c, {0x00}, 0x00},
     };
 
-    for (uint32_t i = 0; i < 3; i++)
-    {
+    for (uint32_t i = 0; i < 3; i++) {
         lcd_send_cmd(t[i].cmd, t[i].data, t[i].len);
     }
 }
@@ -228,29 +226,24 @@ void lcd_PushColors(uint16_t x,
 
     lcd_address_set(x, y, x + width - 1, y + high - 1);
     TFT_CS_L;
-    do
-    {
+    do {
         size_t chunk_size = len;
         spi_transaction_ext_t t = {0};
         memset(&t, 0, sizeof(t));
-        if (first_send)
-        {
+        if (first_send) {
             t.base.flags =
                 SPI_TRANS_MODE_QIO /* | SPI_TRANS_MODE_DIOQIO_ADDR */;
             t.base.cmd = 0x32 /* 0x12 */;
             t.base.addr = 0x002C00;
             first_send = 0;
-        }
-        else
-        {
+        } else {
             t.base.flags = SPI_TRANS_MODE_QIO | SPI_TRANS_VARIABLE_CMD |
                            SPI_TRANS_VARIABLE_ADDR | SPI_TRANS_VARIABLE_DUMMY;
             t.command_bits = 0;
             t.address_bits = 0;
             t.dummy_bits = 0;
         }
-        if (chunk_size > SEND_BUF_SIZE)
-        {
+        if (chunk_size > SEND_BUF_SIZE) {
             chunk_size = SEND_BUF_SIZE;
         }
         t.base.tx_buffer = p;
@@ -280,29 +273,24 @@ void lcd_PushColors(uint16_t *data, uint32_t len)
     bool first_send = 1;
     uint16_t *p = (uint16_t *)data;
     TFT_CS_L;
-    do
-    {
+    do {
         size_t chunk_size = len;
         spi_transaction_ext_t t = {0};
         memset(&t, 0, sizeof(t));
-        if (first_send)
-        {
+        if (first_send) {
             t.base.flags =
                 SPI_TRANS_MODE_QIO /* | SPI_TRANS_MODE_DIOQIO_ADDR */;
             t.base.cmd = 0x32 /* 0x12 */;
             t.base.addr = 0x002C00;
             first_send = 0;
-        }
-        else
-        {
+        } else {
             t.base.flags = SPI_TRANS_MODE_QIO | SPI_TRANS_VARIABLE_CMD |
                            SPI_TRANS_VARIABLE_ADDR | SPI_TRANS_VARIABLE_DUMMY;
             t.command_bits = 0;
             t.address_bits = 0;
             t.dummy_bits = 0;
         }
-        if (chunk_size > SEND_BUF_SIZE)
-        {
+        if (chunk_size > SEND_BUF_SIZE) {
             chunk_size = SEND_BUF_SIZE;
         }
         t.base.tx_buffer = p;
