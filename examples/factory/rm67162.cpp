@@ -182,8 +182,8 @@ void lcd_setRotation(uint8_t r)
 void lcd_address_set(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 {
     lcd_cmd_t t[3] = {
-        {0x2a, {x1 >> 8, x1, x2 >> 8, x2}, 0x04},
-        {0x2b, {y1 >> 8, y1, y2 >> 8, y2}, 0x04},
+        {0x2a, {uint8_t(x1 >> 8), (uint8_t)x1, (uint8_t)(x2 >> 8), (uint8_t) x2}, 0x04},
+        {0x2b, {uint8_t(y1 >> 8), (uint8_t)y1, (uint8_t)(y2 >> 8), (uint8_t) y2}, 0x04},
         {0x2c, {0x00}, 0x00},
     };
 
@@ -201,7 +201,10 @@ void lcd_fill(uint16_t xsta,
 
     uint16_t w = xend - xsta;
     uint16_t h = yend - ysta;
-    uint16_t *color_p = (uint16_t *)heap_caps_malloc(w * h * 2, MALLOC_CAP_INTERNAL);
+    uint16_t *color_p = (uint16_t *)ps_malloc(w * h * 2);
+    if (!color_p) {
+        return;
+    }
     memset(color_p, color, w * h * 2);
     lcd_PushColors(xsta, ysta, w, h, color_p);
     free(color_p);

@@ -35,9 +35,34 @@ void my_disp_flush(lv_disp_drv_t *disp,
     lv_disp_flush_ready(disp);
 }
 
+uint16_t color565(uint8_t r, uint8_t g, uint8_t b)
+{
+    // return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+    // RGB - > GBR
+    return (r)  | (g & 0xF8 << 8) | ((b & 0xFC) << 3);
+}
+
+
+unsigned short rgb888_to_grb565(unsigned char r, unsigned char g, unsigned char b)
+{
+    unsigned short grb565 = 0;
+    grb565 |= (g >> 2) << 11;
+    grb565 |= (r >> 3) << 5;
+    grb565 |= (b >> 3);
+    return grb565;
+}
+
+unsigned short rgb888_to_brg565(unsigned char r, unsigned char g, unsigned char b)
+{
+    unsigned short brg565 = 0;
+    brg565 |= (b >> 3) << 11;
+    brg565 |= (r >> 3) << 5;
+    brg565 |= (g >> 2);
+    return brg565;
+}
+
 void setup()
 {
-    // put your setup code here, to run once:
     Serial.begin(115200);
     Serial.println("T-DISPLAY-S3-AMOLED FACTORY TEST");
     pinMode(PIN_BAT_VOLT, ANALOG);
@@ -45,8 +70,6 @@ void setup()
     rm67162_init(); // amoled lcd initialization
     lcd_setRotation(1);
 
-    lcd_PushColors(0, 0, 536, 240, (uint16_t *)gImage_setup_img);
-    delay(5000);
 
     xTaskCreatePinnedToCore(led_task, "led_task", 1024, NULL, 1, NULL, 0);
 
@@ -69,31 +92,30 @@ void setup()
 
     wifi_test();
     button1.attachClick(
-        []()
-        {
-            uint64_t mask = 1 << PIN_BUTTON_1;
-            lcd_sleep();
-            esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ALL_LOW);
-            esp_deep_sleep_start();
-        });
+    []() {
+        uint64_t mask = 1 << PIN_BUTTON_1;
+        lcd_sleep();
+        esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_deep_sleep_start();
+    });
 
-    button2.attachClick([]()
-                        { ui_switch_page(); });
+    button2.attachClick([]() {
+        ui_switch_page();
+    });
+
+
 }
 
 void loop()
 {
-    // put your main code here, to run repeatedly:
     lv_timer_handler();
     delay(2);
     button1.tick();
     button2.tick();
     static uint32_t last_tick;
-    if (millis() - last_tick > 100)
-    {
+    if (millis() - last_tick > 100) {
         struct tm timeinfo;
-        if (getLocalTime(&timeinfo))
-        {
+        if (getLocalTime(&timeinfo)) {
             lv_msg_send(MSG_NEW_HOUR, &timeinfo.tm_hour);
             lv_msg_send(MSG_NEW_MIN, &timeinfo.tm_min);
         }
@@ -107,8 +129,7 @@ void loop()
 void led_task(void *param)
 {
     pinMode(PIN_LED, OUTPUT);
-    while (1)
-    {
+    while (1) {
         digitalWrite(PIN_LED, 1);
         delay(20);
 
@@ -134,16 +155,12 @@ void wifi_test(void)
     delay(100);
     int n = WiFi.scanNetworks();
     Serial.println("scan done");
-    if (n == 0)
-    {
+    if (n == 0) {
         text = "no networks found";
-    }
-    else
-    {
+    } else {
         text = n;
         text += " networks found\n";
-        for (int i = 0; i < n; ++i)
-        {
+        for (int i = 0; i < n; ++i) {
             text += (i + 1);
             text += ": ";
             text += WiFi.SSID(i);
@@ -167,14 +184,13 @@ void wifi_test(void)
     uint32_t i = 0;
     bool is_smartconfig_connect = false;
     lv_label_set_long_mode(log_label, LV_LABEL_LONG_WRAP);
-    while (WiFi.status() != WL_CONNECTED)
-    {
+    while (WiFi.status() != WL_CONNECTED) {
         Serial.print(".");
         text += ".";
         lv_label_set_text(log_label, text.c_str());
         LV_DELAY(100);
-        if (millis() - last_tick > WIFI_CONNECT_WAIT_MAX)
-        { /* Automatically start smartconfig when connection times out */
+        if (millis() - last_tick > WIFI_CONNECT_WAIT_MAX) {
+            /* Automatically start smartconfig when connection times out */
             text += "\nConnection timed out, start smartconfig";
             lv_label_set_text(log_label, text.c_str());
             LV_DELAY(100);
@@ -186,11 +202,9 @@ void wifi_test(void)
                     "distribution network";
             lv_label_set_text(log_label, text.c_str());
             WiFi.beginSmartConfig();
-            while (1)
-            {
+            while (1) {
                 LV_DELAY(100);
-                if (WiFi.smartConfigDone())
-                {
+                if (WiFi.smartConfigDone()) {
                     Serial.println("\r\nSmartConfig Success\r\n");
                     Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
                     Serial.printf("PSW:%s\r\n", WiFi.psk().c_str());
@@ -207,8 +221,7 @@ void wifi_test(void)
             }
         }
     }
-    if (!is_smartconfig_connect)
-    {
+    if (!is_smartconfig_connect) {
         text += "\nCONNECTED \nTakes ";
         Serial.print("\n CONNECTED \nTakes ");
         text += millis() - last_tick;
@@ -225,8 +238,7 @@ void wifi_test(void)
 void printLocalTime()
 {
     struct tm timeinfo;
-    if (!getLocalTime(&timeinfo))
-    {
+    if (!getLocalTime(&timeinfo)) {
         Serial.println("No time available (yet)");
         return;
     }
@@ -244,29 +256,23 @@ void setTimezone()
 {
     WiFiClientSecure *client = new WiFiClientSecure;
     String timezone;
-    if (client)
-    {
+    if (client) {
         client->setCACert(rootCACertificate);
         HTTPClient https;
-        if (https.begin(*client, GET_TIMEZONE_API))
-        {
+        if (https.begin(*client, GET_TIMEZONE_API)) {
             int httpCode = https.GET();
-            if (httpCode > 0)
-            {
+            if (httpCode > 0) {
                 // HTTP header has been send and Server response header has been handled
                 Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
 
                 // file found at server
                 if (httpCode == HTTP_CODE_OK ||
-                    httpCode == HTTP_CODE_MOVED_PERMANENTLY)
-                {
+                        httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
                     String payload = https.getString();
                     Serial.println(payload);
                     timezone = payload;
                 }
-            }
-            else
-            {
+            } else {
                 Serial.printf("[HTTPS] GET... failed, error: %s\n",
                               https.errorToString(httpCode).c_str());
             }
@@ -275,15 +281,12 @@ void setTimezone()
         delete client;
     }
 
-    for (uint32_t i = 0; i < sizeof(zones); i++)
-    {
-        if (timezone == "none")
-        {
+    for (uint32_t i = 0; i < sizeof(zones); i++) {
+        if (timezone == "none") {
             timezone = "CST-8";
             break;
         }
-        if (timezone == zones[i].name)
-        {
+        if (timezone == zones[i].name) {
             timezone = zones[i].zones;
             break;
         }
