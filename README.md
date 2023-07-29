@@ -58,7 +58,10 @@ The installation method varies depending on the system, refer to the [official m
  
 1. There are two ways to drive the screen. One is the traditional `SPI` (CS, MOSI, SCLK, DC) interface. One is to use the `QSPI` method (CS, SCLK, D0, D1, D2, D3). The QSPI method can increase the driving speed by four times compared with the SPI. to fit the larger screen.
 - Here you can choose to use traditional SPI or new QSPI mode.
-- ![](image/select.png)
+    ![](image/interface.jpg)
+- To use the SPI interface, you need to set **LCD_USB_QSPI_DREVER** to **0** in [pins_config.h](./examples/factory/pins_config.h)
+
+
 
 ## Tips
 
