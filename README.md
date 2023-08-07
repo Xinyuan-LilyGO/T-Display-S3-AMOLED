@@ -63,20 +63,18 @@ The installation method varies depending on the system, refer to the [official m
 
 
 
-## Tips
 
-1. Use board as delivered. Connect board to usb to computer without
-touching anything else. Upload the code. The code will start right after
-download and run. Unplug the board and connect to usb again. The board
-will not do anything.
+## FAQ
 
-2. Use board as delivered. Push down boot button. While boot button is
-pushed, connect usb to computer. Release boot button. Upload the code.
-The code will not start right after download. Nothing will happen.
-Unplug the board and connect to usb again.The board will now boot the
-code. Unplug the board from USB to computer and connect to other power
-source like LiPO battery. Again the board will start the code. The
-computer is not needed again.
 
-New code can be loaded to the board by going to step 1 or 2. Both will
-still work.
+1. The board uses USB as the JTAG upload port. When printing serial port information on USB_CDC_ON_BOOT configuration needs to be turned on. 
+If the port cannot be found when uploading the program or the USB has been used for other functions, the port does not appear. 
+Please enter the upload mode manually. 
+   1. Connect the board via the USB cable
+   2. Press and hold the BOOT button , While still pressing the BOOT button, press RST
+   3. Release the RST
+   4. Release the BOOT button
+   5. Upload sketch
+
+2. If the above is invalid, burn the [binary file](./firmware/README.MD)  to check whether the hardware is normal
+   - [Video](https://youtu.be/L-W3dCMtEdo)
