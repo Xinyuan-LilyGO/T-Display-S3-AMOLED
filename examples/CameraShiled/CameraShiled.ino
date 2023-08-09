@@ -12,6 +12,14 @@
 #include "rm67162.h"
 #include "title.h"
 
+#if ARDUINO_USB_CDC_ON_BOOT != 1
+#warning "If you need to monitor printed data, be sure to set USB CDC On boot to ENABLE, otherwise you will not see any data in the serial monitor"
+#endif
+
+#ifndef BOARD_HAS_PSRAM
+#error "Detected that PSRAM is not turned on. Please set PSRAM to OPI PSRAM in ArduinoIDE"
+#endif
+
 #define CAMERA_PIN_PWDN     (-1)
 #define CAMERA_PIN_RESET    (-1)
 #define CAMERA_PIN_XCLK     (15)
