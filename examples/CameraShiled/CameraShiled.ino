@@ -20,6 +20,9 @@
 #error "Detected that PSRAM is not turned on. Please set PSRAM to OPI PSRAM in ArduinoIDE"
 #endif
 
+// Default use PCB version 1.0
+// #define USE_VERSION2
+
 #define CAMERA_PIN_PWDN     (-1)
 #define CAMERA_PIN_RESET    (-1)
 #define CAMERA_PIN_XCLK     (15)
@@ -30,9 +33,15 @@
 #define CAMERA_PIN_D6       (14)
 #define CAMERA_PIN_D5       (13)
 #define CAMERA_PIN_D4       (11)
+#ifdef USE_VERSION2     //Version 1.1 pin map
+#define CAMERA_PIN_D3       (1)
+#define CAMERA_PIN_D2       (45)
+#define CAMERA_PIN_D1       (46)
+#else
 #define CAMERA_PIN_D3       (3)
 #define CAMERA_PIN_D2       (1)
 #define CAMERA_PIN_D1       (2)
+#endif
 #define CAMERA_PIN_D0       (10)
 #define CAMERA_PIN_VSYNC    (40)
 #define CAMERA_PIN_HREF     (39)
