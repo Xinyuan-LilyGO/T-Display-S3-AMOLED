@@ -43,32 +43,6 @@ void my_disp_flush(lv_disp_drv_t *disp,
     lv_disp_flush_ready(disp);
 }
 
-uint16_t color565(uint8_t r, uint8_t g, uint8_t b)
-{
-    // return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-    // RGB - > GBR
-    return (r)  | (g & 0xF8 << 8) | ((b & 0xFC) << 3);
-}
-
-
-unsigned short rgb888_to_grb565(unsigned char r, unsigned char g, unsigned char b)
-{
-    unsigned short grb565 = 0;
-    grb565 |= (g >> 2) << 11;
-    grb565 |= (r >> 3) << 5;
-    grb565 |= (b >> 3);
-    return grb565;
-}
-
-unsigned short rgb888_to_brg565(unsigned char r, unsigned char g, unsigned char b)
-{
-    unsigned short brg565 = 0;
-    brg565 |= (b >> 3) << 11;
-    brg565 |= (r >> 3) << 5;
-    brg565 |= (g >> 2);
-    return brg565;
-}
-
 void setup()
 {
     Serial.begin(115200);
@@ -97,6 +71,8 @@ void setup()
 
     sntp_servermode_dhcp(1); // (optional)
     configTime(GMT_OFFSET_SEC, DAY_LIGHT_OFFSET_SEC, NTP_SERVER1, NTP_SERVER2);
+
+    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
 
     wifi_test();
     button1.attachClick(
@@ -151,6 +127,7 @@ void wifi_test(void)
     String text;
 
     lv_obj_t *log_label = lv_label_create(lv_scr_act());
+    lv_obj_set_style_bg_color(log_label, lv_color_black(), 0);
     lv_obj_align(log_label, LV_ALIGN_TOP_LEFT, 0, 0);
     lv_obj_set_width(log_label, LV_PCT(100));
     lv_label_set_long_mode(log_label, LV_LABEL_LONG_SCROLL);

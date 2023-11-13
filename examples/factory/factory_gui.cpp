@@ -7,7 +7,8 @@ LV_IMG_DECLARE(lilygo1_gif);
 
 static lv_point_t line_points[] = {
     {0, 0},
-    {536, 0}};
+    {536, 0}
+};
 
 static void update_text_subscriber_cb(lv_event_t *e);
 static void timer_task(lv_timer_t *t);
@@ -30,6 +31,8 @@ void ui_begin()
     lv_obj_t *tv1 = lv_tileview_add_tile(dis, 0, 0, LV_DIR_VER);
     lv_obj_t *tv2 = lv_tileview_add_tile(dis, 0, 1, LV_DIR_VER);
     lv_obj_t *tv3 = lv_tileview_add_tile(dis, 0, 2, LV_DIR_VER);
+
+    lv_obj_set_style_bg_color(dis, lv_color_black(), 0);
     /* page 1 */
     lv_obj_t *main_cout = lv_obj_create(tv1);
     lv_obj_set_size(main_cout, LV_PCT(100), LV_PCT(100));
@@ -99,13 +102,13 @@ void ui_begin()
     String text;
     esp_chip_info_t t;
     esp_chip_info(&t);
-    text = "chip : ";
+    text = "CHIP : ";
     text += ESP.getChipModel();
     text += "\n";
-    text += "psram size : ";
+    text += "PSRAM Size : ";
     text += ESP.getPsramSize() / 1024;
     text += " KB\n";
-    text += "flash size : ";
+    text += "Flash Size : ";
     text += ESP.getFlashChipSize() / 1024;
     text += " KB\n";
 
