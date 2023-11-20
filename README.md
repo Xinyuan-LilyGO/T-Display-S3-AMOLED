@@ -1,5 +1,11 @@
 <h1 align = "center"> 🌟T-Display-S3- AMOLED🌟</h1>
 
+# News
+
+**This warehouse only supports the non-touch version of T-Display-S3-AMOLED. The touch version is not supported. Please go [LilyGo-AMOLED-Series](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series) for the touch version.**
+
+
+
 ## Description
 
 T-Display-S3-AMOLED is an ESP32-S3 development board. Equipped with a new AMOLED high-resolution color LCD screen and 2 programmable keys. Communication adopts SPI or QSPI interface. Keep the same layout design as T-Display. You can directly use ESP32S3 for USB communication or programming.
