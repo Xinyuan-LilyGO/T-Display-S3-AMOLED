@@ -2,7 +2,9 @@
 
 # News
 
-**This warehouse only supports the non-touch version of T-Display-S3-AMOLED. The touch version is not supported. Please go [LilyGo-AMOLED-Series](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series) for the touch version.**
+**This repository only supports the non-touch version of T-Display-S3-AMOLED. Touch version is not supported. For the touch version, please go to [LilyGo-AMOLED-Series](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series)**
+
+**This repository was created by @mmMicky earlier, [LilyGo-AMOLED-Series](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series) also supports the non-touch version. For the non-touch version, it can be used in two Choose between warehouses**
 
 
 
@@ -34,22 +36,8 @@ Please enter the upload mode manually.
 ![](image/Arduino_board.png)
 4. Copy everything from this repository lib folder to [Arduino library folder](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries#manual-installation) (e.g. `C:\Users\YourName\Documents\Arduino\libraries`)
 5. Select the correct settings in the Tools menu as shown below.
+![ArduinoIDE](./image/ArduinoIDE.jpg)
 
-| Setting                  | Value                            |
-| :----------------------- | :------------------------------- |
-| USB CDC On Boot          | Enabled                          |
-| CPU Frequency            | 240MHz (WiFi)                    |
-| Core Debug Level         | None                             |
-| USB DFU On Boot          | Enabled                          |
-| Events Run On            | Core 1                           |
-| Flash Mode               | QIO 80MHz                        |
-| Flash Size               | 16MB (128Mb)                     |
-| JTAG Adapter             | Integrated USB JTAG              |
-| Arduino Runs On          | Core 1                           |
-| USB Firmware MSC On Boot | Disabled                         |
-| Partition Scheme         | Huge APP (3MB No OTA/1MB SPIFFS) |
-| PSRAM                    | OPI PSRAM                        |
-| USB Mode                 | Hardware CDC and JTAG            |
 
 ### PlatformIO
 
