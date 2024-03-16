@@ -6,9 +6,12 @@
 #include "setup_img.h"
 #include "WiFi.h"
 #include "esp_sntp.h"
+#include "esp_sntp.h"
 #include "time.h"
 #include "factory_gui.h"
 #include "zones.h"
+#include "pins_config.h"
+#include "cert.h"
 #include "pins_config.h"
 #include "cert.h"
 #include <HTTPClient.h>
@@ -126,7 +129,7 @@ void loop()
 
 void test_screen(void)
 {
-        //Test screen bad pixels
+    //Test screen bad pixels
     lv_obj_t * colors_obj = lv_obj_create(lv_scr_act());
     lv_obj_set_size(colors_obj,lv_pct(100),lv_pct(100));
     lv_obj_set_style_bg_color(colors_obj,lv_color_make(255,0,0),LV_PART_MAIN);
@@ -270,6 +273,7 @@ void printLocalTime()
     }
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
 }
+
 // Callback function (get's called when time adjusts via NTP)
 void timeavailable(struct timeval *t)
 {
