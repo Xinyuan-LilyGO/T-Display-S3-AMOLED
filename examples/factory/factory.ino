@@ -339,3 +339,68 @@ void setTimezone()
     setenv("TZ", timezone.c_str(), 1); // set time zone
     tzset();
 }
+
+/* void setTimezone()
+{
+    Serial.println ("Setting timezone");
+#ifdef CUSTOM_TIMEZONE
+    String timezone = CUSTOM_TIMEZONE;
+    Serial.println("Custom timezone is set.  Getting timezone info for: "+ timezone);
+#else
+    String tz_api = GET_TIMEZONE_API;
+    Serial.println("No custom timezone is set, connecting to " + tz_api);
+    
+    WiFiClientSecure *client = new WiFiClientSecure;
+    String timezone;
+    if (client) {
+        client->setCACert(rootCA_ISRG_ROOT_X2);
+        HTTPClient https;
+        if (https.begin(*client, GET_TIMEZONE_API)) {
+            int httpCode = https.GET();
+            if (httpCode > 0) {
+                // HTTP header has been send and Server response header has been handled
+                Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+
+                // file found at server
+                if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+                    String payload = https.getString();
+                    Serial.println(payload);
+                    timezone = payload;
+                }
+            } else {
+                Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+                String timezone = "None";
+                Serial.println("Unable to get timezone from API, setting timezone to: " + timezone);
+            }
+            try {
+                  if(https.connected()){
+                    https.end();
+                  } else {
+                    Serial.println("Error https connection dropped");
+                    throw 400;
+                  }
+            }
+            catch (...){
+              Serial.println("Handled exception");
+            }
+
+        }
+        delete client;
+    }
+    
+#endif
+    for (uint32_t i = 0; i < sizeof(zones); i++) {
+            if (timezone == "None") {
+                timezone = "Australia/Sydney";
+                timezone = "AEST-10AEDT,M10.1.0,M4.1.0/3";
+                break;
+            }
+            if (timezone == zones[i].name) {
+                timezone = zones[i].zones;
+                break;
+            }
+        }
+    Serial.println("timezone : " + timezone);
+    setenv("TZ", timezone.c_str(), 1); // set time zone
+    tzset();
+} */
