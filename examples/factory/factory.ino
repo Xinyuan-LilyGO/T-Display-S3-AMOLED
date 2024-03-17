@@ -35,6 +35,8 @@ void printLocalTime();
 void SmartConfig();
 void setTimezone();
 
+bool pressed;
+
 void my_disp_flush(lv_disp_drv_t *disp,
                    const lv_area_t *area,
                    lv_color_t *color_p)
@@ -75,6 +77,35 @@ void setup()
     configTime(GMT_OFFSET_SEC, DAY_LIGHT_OFFSET_SEC, NTP_SERVER1, NTP_SERVER2);
 
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
+
+
+
+    //Test screen bad pixels
+    lv_obj_t * colors_obj = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(colors_obj,lv_pct(100),lv_pct(100));
+    lv_obj_set_style_bg_color(colors_obj,lv_color_make(255,0,0),LV_PART_MAIN);
+    lv_obj_center(colors_obj);
+
+    button1.attachClick([]() {
+        pressed = true;
+    });
+
+    uint8_t index = 0;
+    lv_color_t test_color[] = {lv_color_make(0,255,0),lv_color_make(0,0,255),lv_color_make(255,255,255),lv_color_make(0,0,0)};
+    while(1){
+        if(pressed){
+            pressed = false;
+            lv_obj_set_style_bg_color(colors_obj,test_color[index],LV_PART_MAIN);
+            index++;
+            if(index > sizeof(test_color)/sizeof(test_color[0])){
+                lv_obj_del(colors_obj);
+                break;
+            }
+        }
+        lv_timer_handler();
+        button1.tick();
+    }
+    //test color end
 
     wifi_test();
     LV_DELAY(2000);
