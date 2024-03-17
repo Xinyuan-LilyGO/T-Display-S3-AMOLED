@@ -80,7 +80,49 @@ void setup()
 
 
 
-    //Test screen bad pixels
+    // test_screen(); // uncomment if you wish to test for bad pixels before factory demo.
+    wifi_test();
+    LV_DELAY(2000);
+    setTimezone();
+    printLocalTime();
+    ui_begin();
+
+    button1.attachClick(
+    []() {
+        uint64_t mask = 1 << PIN_BUTTON_1;
+        lcd_sleep();
+        esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_deep_sleep_start();
+    });
+
+    button2.attachClick([]() {
+        ui_switch_page();
+    });
+}
+
+void loop()
+{
+    lv_timer_handler();
+    delay(2);
+    button1.tick();
+    button2.tick();
+    static uint32_t last_tick;
+    if (millis() - last_tick > 100) {
+        struct tm timeinfo;
+        if (getLocalTime(&timeinfo)) {
+            lv_msg_send(MSG_NEW_HOUR, &timeinfo.tm_hour);
+            lv_msg_send(MSG_NEW_MIN, &timeinfo.tm_min);
+        }
+        uint32_t volt = (analogReadMilliVolts(PIN_BAT_VOLT) * 2);
+        lv_msg_send(MSG_NEW_VOLT, &volt);
+
+        last_tick = millis();
+    }
+}
+
+//Test screen bad pixels
+void test_screen(void)
+{
     lv_obj_t * colors_obj = lv_obj_create(lv_scr_act());
     lv_obj_set_size(colors_obj,lv_pct(100),lv_pct(100));
     lv_obj_set_style_bg_color(colors_obj,lv_color_make(255,0,0),LV_PART_MAIN);
@@ -106,46 +148,6 @@ void setup()
         button1.tick();
     }
     //test color end
-
-    wifi_test();
-    LV_DELAY(2000);
-    setTimezone();
-    printLocalTime();
-    ui_begin();
-
-    button1.attachClick(
-    []() {
-        uint64_t mask = 1 << PIN_BUTTON_1;
-        lcd_sleep();
-        esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ALL_LOW);
-        esp_deep_sleep_start();
-    });
-
-    button2.attachClick([]() {
-        ui_switch_page();
-    });
-
-
-}
-
-void loop()
-{
-    lv_timer_handler();
-    delay(2);
-    button1.tick();
-    button2.tick();
-    static uint32_t last_tick;
-    if (millis() - last_tick > 100) {
-        struct tm timeinfo;
-        if (getLocalTime(&timeinfo)) {
-            lv_msg_send(MSG_NEW_HOUR, &timeinfo.tm_hour);
-            lv_msg_send(MSG_NEW_MIN, &timeinfo.tm_min);
-        }
-        uint32_t volt = (analogReadMilliVolts(PIN_BAT_VOLT) * 2);
-        lv_msg_send(MSG_NEW_VOLT, &volt);
-
-        last_tick = millis();
-    }
 }
 
 void led_task(void *param)
@@ -264,6 +266,7 @@ void printLocalTime()
     }
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
 }
+
 // Callback function (get's called when time adjusts via NTP)
 void timeavailable(struct timeval *t)
 {
@@ -336,48 +339,3 @@ void setTimezone()
     setenv("TZ", timezone.c_str(), 1); // set time zone
     tzset();
 }
-
-/* void setTimezone()
-{
-    WiFiClientSecure *client = new WiFiClientSecure;
-    String timezone;
-    if (client) {
-        // client->setCACert(rootCACertificate);
-        HTTPClient https;
-        if (https.begin(*client, GET_TIMEZONE_API)) {
-            int httpCode = https.GET();
-            if (httpCode > 0) {
-                // HTTP header has been send and Server response header has been handled
-                Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
-
-                // file found at server
-                if (httpCode == HTTP_CODE_OK ||
-                        httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-                    String payload = https.getString();
-                    Serial.println(payload);
-                    timezone = payload;
-                }
-            } else {
-                Serial.printf("[HTTPS] GET... failed, error: %s\n",
-                              https.errorToString(httpCode).c_str());
-            }
-            https.end();
-        }
-        delete client;
-    }
-
-    for (uint32_t i = 0; i < sizeof(zones); i++) {
-        if (timezone == "none") {
-            timezone = "CST-8";
-            break;
-        }
-        if (timezone == zones[i].name) {
-            timezone = zones[i].zones;
-            break;
-        }
-    }
-
-    Serial.println("timezone : " + timezone);
-    setenv("TZ", timezone.c_str(), 1); // set time zone
-    tzset();
-} */
