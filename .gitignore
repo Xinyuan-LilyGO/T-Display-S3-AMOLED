@@ -54,3 +54,8 @@ dkms.conf
 .pio
 script
 build
+lib/lvgl/src/lv_conf.h
+examples/factory/rootCA.key
+examples/factory/rootCA.crt
+examples/factory/lilygo2_gif.c
+examples/factory/pins_config.h

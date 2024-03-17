@@ -5,10 +5,12 @@
 #include "rm67162.h"
 #include "setup_img.h"
 #include "WiFi.h"
-#include "sntp.h"
+#include "esp_sntp.h"
 #include "time.h"
 #include "factory_gui.h"
 #include "zones.h"
+#include "pins_config.h"
+#include "cert.h"
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 
@@ -78,7 +80,49 @@ void setup()
 
 
 
-    //Test screen bad pixels
+    // test_screen(); // uncomment if you wish to test for bad pixels before factory demo.
+    wifi_test();
+    LV_DELAY(2000);
+    setTimezone();
+    printLocalTime();
+    ui_begin();
+
+    button1.attachClick(
+    []() {
+        uint64_t mask = 1 << PIN_BUTTON_1;
+        lcd_sleep();
+        esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_deep_sleep_start();
+    });
+
+    button2.attachClick([]() {
+        ui_switch_page();
+    });
+}
+
+void loop()
+{
+    lv_timer_handler();
+    delay(2);
+    button1.tick();
+    button2.tick();
+    static uint32_t last_tick;
+    if (millis() - last_tick > 100) {
+        struct tm timeinfo;
+        if (getLocalTime(&timeinfo)) {
+            lv_msg_send(MSG_NEW_HOUR, &timeinfo.tm_hour);
+            lv_msg_send(MSG_NEW_MIN, &timeinfo.tm_min);
+        }
+        uint32_t volt = (analogReadMilliVolts(PIN_BAT_VOLT) * 2);
+        lv_msg_send(MSG_NEW_VOLT, &volt);
+
+        last_tick = millis();
+    }
+}
+
+//Test screen bad pixels
+void test_screen(void)
+{
     lv_obj_t * colors_obj = lv_obj_create(lv_scr_act());
     lv_obj_set_size(colors_obj,lv_pct(100),lv_pct(100));
     lv_obj_set_style_bg_color(colors_obj,lv_color_make(255,0,0),LV_PART_MAIN);
@@ -104,41 +148,6 @@ void setup()
         button1.tick();
     }
     //test color end
-
-    wifi_test();
-    button1.attachClick(
-    []() {
-        uint64_t mask = 1 << PIN_BUTTON_1;
-        lcd_sleep();
-        esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ALL_LOW);
-        esp_deep_sleep_start();
-    });
-
-    button2.attachClick([]() {
-        ui_switch_page();
-    });
-
-
-}
-
-void loop()
-{
-    lv_timer_handler();
-    delay(2);
-    button1.tick();
-    button2.tick();
-    static uint32_t last_tick;
-    if (millis() - last_tick > 100) {
-        struct tm timeinfo;
-        if (getLocalTime(&timeinfo)) {
-            lv_msg_send(MSG_NEW_HOUR, &timeinfo.tm_hour);
-            lv_msg_send(MSG_NEW_MIN, &timeinfo.tm_min);
-        }
-        uint32_t volt = (analogReadMilliVolts(PIN_BAT_VOLT) * 2);
-        lv_msg_send(MSG_NEW_VOLT, &volt);
-
-        last_tick = millis();
-    }
 }
 
 void led_task(void *param)
@@ -246,9 +255,6 @@ void wifi_test(void)
         Serial.println(" millseconds");
         lv_label_set_text(log_label, text.c_str());
     }
-    LV_DELAY(2000);
-    setTimezone();
-    ui_begin();
 }
 
 void printLocalTime()
@@ -260,6 +266,7 @@ void printLocalTime()
     }
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
 }
+
 // Callback function (get's called when time adjusts via NTP)
 void timeavailable(struct timeval *t)
 {
@@ -270,10 +277,18 @@ void timeavailable(struct timeval *t)
 
 void setTimezone()
 {
+    Serial.println ("Setting timezone");
+#ifdef CUSTOM_TIMEZONE
+    String timezone = CUSTOM_TIMEZONE;
+    Serial.println("Custom timezone is set.  Getting timezone info for: "+ timezone);
+#else
+    String tz_api = GET_TIMEZONE_API;
+    Serial.println("No custom timezone is set, connecting to " + tz_api);
+    
     WiFiClientSecure *client = new WiFiClientSecure;
     String timezone;
     if (client) {
-        client->setCACert(rootCACertificate);
+        client->setCACert(rootCA_ISRG_ROOT_X2);
         HTTPClient https;
         if (https.begin(*client, GET_TIMEZONE_API)) {
             int httpCode = https.GET();
@@ -282,32 +297,44 @@ void setTimezone()
                 Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
 
                 // file found at server
-                if (httpCode == HTTP_CODE_OK ||
-                        httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+                if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
                     String payload = https.getString();
                     Serial.println(payload);
                     timezone = payload;
                 }
             } else {
-                Serial.printf("[HTTPS] GET... failed, error: %s\n",
-                              https.errorToString(httpCode).c_str());
+                Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+                String timezone = "None";
+                Serial.println("Unable to get timezone from API, setting timezone to: " + timezone);
             }
-            https.end();
+            try {
+                  if(https.connected()){
+                    https.end();
+                  } else {
+                    Serial.println("Error https connection dropped");
+                    throw 400;
+                  }
+            }
+            catch (...){
+              Serial.println("Handled exception");
+            }
+
         }
         delete client;
     }
-
+    
+#endif
     for (uint32_t i = 0; i < sizeof(zones); i++) {
-        if (timezone == "none") {
-            timezone = "CST-8";
-            break;
+            if (timezone == "None") {
+                timezone = "Australia/Sydney";
+                timezone = "AEST-10AEDT,M10.1.0,M4.1.0/3";
+                break;
+            }
+            if (timezone == zones[i].name) {
+                timezone = zones[i].zones;
+                break;
+            }
         }
-        if (timezone == zones[i].name) {
-            timezone = zones[i].zones;
-            break;
-        }
-    }
-
     Serial.println("timezone : " + timezone);
     setenv("TZ", timezone.c_str(), 1); // set time zone
     tzset();
