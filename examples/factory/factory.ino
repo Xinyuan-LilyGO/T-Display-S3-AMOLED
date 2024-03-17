@@ -80,7 +80,7 @@ void setup()
 
 
 
-    // test_screen();
+    // test_screen(); // uncomment if you wish to test for bad pixels before factory demo.
 
     wifi_test();
     LV_DELAY(2000);
