@@ -6,12 +6,9 @@
 #include "setup_img.h"
 #include "WiFi.h"
 #include "esp_sntp.h"
-#include "esp_sntp.h"
 #include "time.h"
 #include "factory_gui.h"
 #include "zones.h"
-#include "pins_config.h"
-#include "cert.h"
 #include "pins_config.h"
 #include "cert.h"
 #include <HTTPClient.h>
@@ -84,7 +81,6 @@ void setup()
 
 
     // test_screen(); // uncomment if you wish to test for bad pixels before factory demo.
-
     wifi_test();
     LV_DELAY(2000);
     setTimezone();
@@ -102,8 +98,6 @@ void setup()
     button2.attachClick([]() {
         ui_switch_page();
     });
-
-
 }
 
 void loop()
@@ -126,10 +120,9 @@ void loop()
     }
 }
 
-
+//Test screen bad pixels
 void test_screen(void)
 {
-    //Test screen bad pixels
     lv_obj_t * colors_obj = lv_obj_create(lv_scr_act());
     lv_obj_set_size(colors_obj,lv_pct(100),lv_pct(100));
     lv_obj_set_style_bg_color(colors_obj,lv_color_make(255,0,0),LV_PART_MAIN);
@@ -155,8 +148,8 @@ void test_screen(void)
         button1.tick();
     }
     //test color end
-
 }
+
 void led_task(void *param)
 {
     pinMode(PIN_LED, OUTPUT);
