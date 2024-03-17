@@ -80,32 +80,7 @@ void setup()
 
 
 
-    //Test screen bad pixels
-    lv_obj_t * colors_obj = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(colors_obj,lv_pct(100),lv_pct(100));
-    lv_obj_set_style_bg_color(colors_obj,lv_color_make(255,0,0),LV_PART_MAIN);
-    lv_obj_center(colors_obj);
-
-    button1.attachClick([]() {
-        pressed = true;
-    });
-
-    uint8_t index = 0;
-    lv_color_t test_color[] = {lv_color_make(0,255,0),lv_color_make(0,0,255),lv_color_make(255,255,255),lv_color_make(0,0,0)};
-    while(1){
-        if(pressed){
-            pressed = false;
-            lv_obj_set_style_bg_color(colors_obj,test_color[index],LV_PART_MAIN);
-            index++;
-            if(index > sizeof(test_color)/sizeof(test_color[0])){
-                lv_obj_del(colors_obj);
-                break;
-            }
-        }
-        lv_timer_handler();
-        button1.tick();
-    }
-    //test color end
+    // test_screen();
 
     wifi_test();
     LV_DELAY(2000);
@@ -148,6 +123,37 @@ void loop()
     }
 }
 
+
+void test_screen(void)
+{
+        //Test screen bad pixels
+    lv_obj_t * colors_obj = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(colors_obj,lv_pct(100),lv_pct(100));
+    lv_obj_set_style_bg_color(colors_obj,lv_color_make(255,0,0),LV_PART_MAIN);
+    lv_obj_center(colors_obj);
+
+    button1.attachClick([]() {
+        pressed = true;
+    });
+
+    uint8_t index = 0;
+    lv_color_t test_color[] = {lv_color_make(0,255,0),lv_color_make(0,0,255),lv_color_make(255,255,255),lv_color_make(0,0,0)};
+    while(1){
+        if(pressed){
+            pressed = false;
+            lv_obj_set_style_bg_color(colors_obj,test_color[index],LV_PART_MAIN);
+            index++;
+            if(index > sizeof(test_color)/sizeof(test_color[0])){
+                lv_obj_del(colors_obj);
+                break;
+            }
+        }
+        lv_timer_handler();
+        button1.tick();
+    }
+    //test color end
+
+}
 void led_task(void *param)
 {
     pinMode(PIN_LED, OUTPUT);
