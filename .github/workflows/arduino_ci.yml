@@ -43,4 +43,4 @@ jobs:
           cp  -r $PWD/lib/* $HOME/Arduino/libraries
 
           cd $GITHUB_WORKSPACE ;
-          arduino-cli compile -besp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi --library . $PWD/$EXAMPLES ;
+          arduino-cli compile -besp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi $PWD/$EXAMPLES ;
