@@ -1,0 +1,42 @@
+name: PlatformIO CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    paths:
+      - "examples/**"
+      - "src/**"
+      - "lib/**"
+      - "platformio.ini"
+      - ".github/workflows/platformio.yml"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        examples:
+          - examples/CameraShield
+          - examples/factory
+          - examples/lvgl_demo
+          - examples/octagon_on_amoled
+          - examples/TFT_eSPI_Sprite
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Run PlatformIO
+        run: |
+          export PLATFORMIO_SRC_DIR=${{ matrix.examples }}
+          pio run
