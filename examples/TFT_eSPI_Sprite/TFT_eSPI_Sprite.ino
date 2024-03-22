@@ -36,6 +36,14 @@ void setup()
 {
     // Use TFT_eSPI Sprite made by framebuffer , unnecessary calling during use tft.xxxx function
     Serial.begin(115200);
+    /*
+    * Compatible with touch version
+    * Touch version, IO38 is the screen power enable
+    * Non-touch version, IO38 is an onboard LED light
+    * * */
+    pinMode(PIN_LED, OUTPUT);
+    digitalWrite(PIN_LED, HIGH);
+
     rm67162_init();
     lcd_setRotation(1);
     spr.createSprite(WIDTH, HEIGHT);

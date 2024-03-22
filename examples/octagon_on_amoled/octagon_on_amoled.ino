@@ -27,6 +27,14 @@ TFT_eSprite sprite = TFT_eSprite(&tft);
 
 void setup()
 {
+    /*
+    * Compatible with touch version
+    * Touch version, IO38 is the screen power enable
+    * Non-touch version, IO38 is an onboard LED light
+    * * */
+    pinMode(PIN_LED, OUTPUT);
+    digitalWrite(PIN_LED, HIGH);
+
     // Initialize AMOLED LCD and set properties
     rm67162_init();
     lcd_setRotation(1);

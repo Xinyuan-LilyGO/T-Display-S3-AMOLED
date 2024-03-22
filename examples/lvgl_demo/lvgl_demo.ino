@@ -25,6 +25,14 @@ void my_disp_flush(lv_disp_drv_t *disp,
 
 void setup()
 {
+    /*
+    * Compatible with touch version
+    * Touch version, IO38 is the screen power enable
+    * Non-touch version, IO38 is an onboard LED light
+    * * */
+    pinMode(PIN_LED, OUTPUT);
+    digitalWrite(PIN_LED, HIGH);
+
     rm67162_init(); // amoled lcd initialization
 
     lcd_setRotation(1);

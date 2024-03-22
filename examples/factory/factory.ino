@@ -5,7 +5,7 @@
 #include "rm67162.h"
 #include "setup_img.h"
 #include "WiFi.h"
-#include "sntp.h"
+#include "esp_sntp.h"
 #include "time.h"
 #include "factory_gui.h"
 #include "zones.h"
@@ -26,7 +26,6 @@ static lv_color_t *buf;
 OneButton button1(PIN_BUTTON_1, true);
 OneButton button2(PIN_BUTTON_2, true);
 
-void led_task(void *param);
 void wifi_test(void);
 void timeavailable(struct timeval *t);
 void printLocalTime();
@@ -45,17 +44,53 @@ void my_disp_flush(lv_disp_drv_t *disp,
     lv_disp_flush_ready(disp);
 }
 
+void test_screen_color()
+{
+    //Test screen bad pixels
+    lv_obj_t *colors_obj = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(colors_obj, lv_pct(100), lv_pct(100));
+    lv_obj_set_style_bg_color(colors_obj, lv_color_make(255, 0, 0), LV_PART_MAIN);
+    lv_obj_center(colors_obj);
+
+    button1.attachClick([]() {
+        pressed = true;
+    });
+
+    uint8_t index = 0;
+    lv_color_t test_color[] = {lv_color_make(0, 255, 0), lv_color_make(0, 0, 255), lv_color_make(255, 255, 255), lv_color_make(0, 0, 0)};
+    while (1) {
+        if (pressed) {
+            pressed = false;
+            lv_obj_set_style_bg_color(colors_obj, test_color[index], LV_PART_MAIN);
+            index++;
+            if (index > sizeof(test_color) / sizeof(test_color[0])) {
+                lv_obj_del(colors_obj);
+                break;
+            }
+        }
+        lv_timer_handler();
+        button1.tick();
+    }
+    //test color end
+}
+
 void setup()
 {
     Serial.begin(115200);
+
     Serial.println("T-DISPLAY-S3-AMOLED FACTORY TEST");
     pinMode(PIN_BAT_VOLT, ANALOG);
 
+    /*
+    * Compatible with touch version
+    * Touch version, IO38 is the screen power enable
+    * Non-touch version, IO38 is an onboard LED light
+    * * */
+    pinMode(PIN_LED, OUTPUT);
+    digitalWrite(PIN_LED, HIGH);
+
     rm67162_init(); // amoled lcd initialization
     lcd_setRotation(1);
-
-
-    xTaskCreatePinnedToCore(led_task, "led_task", 1024, NULL, 1, NULL, 0);
 
     lv_init();
     buf = (lv_color_t *)ps_malloc(sizeof(lv_color_t) * LVGL_LCD_BUF_SIZE);
@@ -71,43 +106,16 @@ void setup()
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
 
-    sntp_servermode_dhcp(1); // (optional)
     configTime(GMT_OFFSET_SEC, DAY_LIGHT_OFFSET_SEC, NTP_SERVER1, NTP_SERVER2);
 
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
 
-
-
-    //Test screen bad pixels
-    lv_obj_t * colors_obj = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(colors_obj,lv_pct(100),lv_pct(100));
-    lv_obj_set_style_bg_color(colors_obj,lv_color_make(255,0,0),LV_PART_MAIN);
-    lv_obj_center(colors_obj);
-
-    button1.attachClick([]() {
-        pressed = true;
-    });
-
-    uint8_t index = 0;
-    lv_color_t test_color[] = {lv_color_make(0,255,0),lv_color_make(0,0,255),lv_color_make(255,255,255),lv_color_make(0,0,0)};
-    while(1){
-        if(pressed){
-            pressed = false;
-            lv_obj_set_style_bg_color(colors_obj,test_color[index],LV_PART_MAIN);
-            index++;
-            if(index > sizeof(test_color)/sizeof(test_color[0])){
-                lv_obj_del(colors_obj);
-                break;
-            }
-        }
-        lv_timer_handler();
-        button1.tick();
-    }
-    //test color end
+    // Factory test screen color
+    test_screen_color();
 
     wifi_test();
-    button1.attachClick(
-    []() {
+
+    button1.attachClick([]() {
         uint64_t mask = 1 << PIN_BUTTON_1;
         lcd_sleep();
         esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ALL_LOW);
@@ -117,8 +125,6 @@ void setup()
     button2.attachClick([]() {
         ui_switch_page();
     });
-
-
 }
 
 void loop()
@@ -138,18 +144,6 @@ void loop()
         lv_msg_send(MSG_NEW_VOLT, &volt);
 
         last_tick = millis();
-    }
-}
-
-void led_task(void *param)
-{
-    pinMode(PIN_LED, OUTPUT);
-    while (1) {
-        digitalWrite(PIN_LED, 1);
-        delay(20);
-
-        digitalWrite(PIN_LED, 0);
-        delay(980);
     }
 }
 
@@ -260,6 +254,8 @@ void printLocalTime()
     }
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
 }
+
+
 // Callback function (get's called when time adjusts via NTP)
 void timeavailable(struct timeval *t)
 {
@@ -268,33 +264,30 @@ void timeavailable(struct timeval *t)
     WiFi.disconnect();
 }
 
+WiFiClientSecure client;
+
 void setTimezone()
 {
-    WiFiClientSecure *client = new WiFiClientSecure;
     String timezone;
-    if (client) {
-        client->setCACert(rootCACertificate);
-        HTTPClient https;
-        if (https.begin(*client, GET_TIMEZONE_API)) {
-            int httpCode = https.GET();
-            if (httpCode > 0) {
-                // HTTP header has been send and Server response header has been handled
-                Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
-
-                // file found at server
-                if (httpCode == HTTP_CODE_OK ||
-                        httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-                    String payload = https.getString();
-                    Serial.println(payload);
-                    timezone = payload;
-                }
-            } else {
-                Serial.printf("[HTTPS] GET... failed, error: %s\n",
-                              https.errorToString(httpCode).c_str());
+    client.setCACert(rootCACertificate);
+    HTTPClient https;
+    if (https.begin(client, GET_TIMEZONE_API)) {
+        int httpCode = https.GET();
+        if (httpCode > 0) {
+            // HTTP header has been send and Server response header has been handled
+            Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+            // file found at server
+            if (httpCode == HTTP_CODE_OK ||
+                    httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+                String payload = https.getString();
+                Serial.println(payload);
+                timezone = payload;
             }
-            https.end();
+        } else {
+            Serial.printf("[HTTPS] GET... failed, error: %s\n",
+                          https.errorToString(httpCode).c_str());
         }
-        delete client;
+        https.end();
     }
 
     for (uint32_t i = 0; i < sizeof(zones); i++) {
